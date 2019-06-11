@@ -58,7 +58,7 @@ function print() {
     console.log(table.toString());
     // checks to see if the user just made a purchase if they have not run the buy function.
     if (!hasBought) {
-      buy();
+      initiate();
     }
     // if they have made a purchase thank them print the item they purchased and how much they spent and the table with the updated quantities
     else {
@@ -81,7 +81,25 @@ you're awesome
 // this will ask the user to enter a product number that they are interested in
 // it will then ask the user how much they would like to purchase 
 // 
+
+function initiate(){
+  inquirer
+  .prompt({
+    name: "initiate",
+    type: "confirm",
+    message: "would you like to make a purchase?"
+  }).then(function(answer){
+    if (answer.initiate){
+      buy();
+    }
+    else{
+      console.log("have a nice day!")
+      connection.end()
+    }
+  })
+}
 function buy() {
+
   inquirer
     .prompt([{
       name: "whichProduct",
@@ -109,7 +127,7 @@ function buy() {
             if (err) throw err;
 
             // this if statement will check to see if there is enough stock to fulfill the user request
-            if (stock > howMuch) {
+            if (stock >= howMuch) {
               // all this will take the data points from the response and save them in global variables
               price = res[0].price * howMuch;
               productSelected = res[0].product_name;
@@ -131,6 +149,9 @@ function buy() {
                   // calls a function that will handle the update and decrement of quantity and also redirect the user
                   // to the anotherPurchase function
                   decrementAndPrint(parseId, quantity);
+                }
+                else{
+                  print();
                 }
               })
 
@@ -166,7 +187,7 @@ function anotherPurchase() {
 
     if (answer.another) {
       hasBought = false;
-      print();
+      buy();
     } else {
       console.log("have a nice day!")
       connection.end()
@@ -189,7 +210,7 @@ function decrementAndPrint(answer, quantity) {
     ],
     function (err, res) {
       if (err) throw err;
-      console.log(res);
+    
 
       hasBought = true;
 
