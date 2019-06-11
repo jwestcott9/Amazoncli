@@ -1,10 +1,11 @@
 var mysql = require("mysql");
 var inquirer = require("inquirer");
 var Table = require("cli-table");
-var table = new Table({
-  head: ["ID", "Products", "Department", "Price", "Stock"],
-  colWidths: [20, 20, 20, 20, 20]
-})
+var table;
+var price;
+var pruductSelected;
+var quantity;
+var quantityPurchased;
 
 // create the connection information for the sql database
 var connection = mysql.createConnection({
@@ -20,16 +21,21 @@ var connection = mysql.createConnection({
   password: "jcello69",
   database: "bamazon"
 });
+start();
 
-
-connection.connect(function (err) {
-  if (err) throw err;
-  print();
-})
-
+function start() {
+  connection.connect(function (err) {
+    if (err) throw err;
+    print();
+  })
+}
 var hasBought = false;
 
 function print() {
+  table = new Table({
+    head: ["ID", "Products", "Department", "Price", "Stock"],
+    colWidths: [20, 20, 20, 20, 20]
+  })
   console.log("Selecting all products...\n");
   connection.query("SELECT * FROM products", function (err, res) {
     if (err) throw err;
@@ -43,55 +49,111 @@ function print() {
     console.log(table.toString());
     if (!hasBought) {
       buy();
+    } else {
+      console.log(`
+Hey thanks for purchasing ${quantityPurchased} ${productSelected}s for $${price}!!
+
+you're awesome
+      `)
+      anotherPurchase();
+
+
     }
+
 
   })
 
 };
 
-
-
 function buy() {
   inquirer
-    .prompt({
+    .prompt([{
       name: "whichProduct",
       type: "input",
       message: "Please enter the product Id that you wish to purchase",
-    }).then(function (answer) {
-
+    }, {
+      name: "howMuch",
+      type: "input",
+      message: "how many would you like to buy?"
+    }])
+    .then(function (answer) {
       connection.query("select * from products where ?", [{
-        id: answer.whichProduct
-      }], function (err, res) {
-       console.log(res)
-        decrementAndPrint(res, answer);
-       
-      })
-
-
-
-      function decrementAndPrint(res, answer) {
-        var decrement = res[0].stock_quantity - 1;
-       
-        connection.query(
-          "UPDATE products SET ? WHERE ?",
-          [{
-              stock_quantity: decrement
-            },
-            {
-              id: answer.whichProduct
-            }
-          ],
-          function (err, res) {
-            if (err) throw err;
-            console.log(res);
-            hasBought = true;
-            print();
-
-          }
+          id: parseInt(answer.whichProduct),
+        }],
+        function (err, res) {
           
-        )
+          if (err) throw err;
 
-       
-      }
+          if (res[0].stock_quantity > answer.howMuch) {
+            price = res[0].price * answer.howMuch;
+            productSelected = res[0].product_name;
+            quantityPurchased = answer.howMuch;
+            quantity = res[0].stock_quantity - answer.howMuch;
+            console.log(`The total price of your purchase will be $${price}`)
+            inquirer.prompt(
+              [{
+                type: "confirm",
+                name: "priceConfirm",
+                message: "would you like to make this purchase?"
+              }]
+            ).then(function (confirmation) {
+              if (confirmation.priceConfirm === true) {
+               
+                decrementAndPrint(answer.whichProduct, quantity);
+              }
+            })
+
+          } else {
+            console.log("There is insufficient stock to make this purchase")
+            anotherPurchase();
+          }
+        })
     })
+}
+
+function anotherPurchase() {
+
+  inquirer.prompt([{
+    name: "another",
+    message: "would you like to make a different purchase?",
+    type: "confirm",
+
+  }]).then(function (answer) {
+
+    if (answer.another) {
+      hasBought = false;
+      print();
+    } else {
+      console.log("have a nice day!")
+      connection.end()
+    }
+  })
+}
+
+
+
+function decrementAndPrint(answer, quantity) {
+console.log(answer);
+  connection.query(
+    "UPDATE products SET ? WHERE ?",
+    [{
+        stock_quantity: quantity,
+      },
+      {
+        id: answer,
+      }
+    ],
+    function (err, res) {
+      if (err) throw err;
+      console.log(res);
+
+      hasBought = true;
+
+      print();
+
+    }
+
+  )
+
+
 }
