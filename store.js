@@ -24,12 +24,12 @@ var connection = mysql.createConnection({
 
 connection.connect(function (err) {
   if (err) throw err;
-  start();
+  print();
 })
 
 var hasBought = false;
 
-function start() {
+function print() {
   console.log("Selecting all products...\n");
   connection.query("SELECT * FROM products", function (err, res) {
     if (err) throw err;
@@ -71,7 +71,7 @@ function buy() {
 
       function decrementAndPrint(res, answer) {
         var decrement = res[0].stock_quantity - 1;
-        hasbought = true;
+       
         connection.query(
           "UPDATE products SET ? WHERE ?",
           [{
@@ -84,9 +84,14 @@ function buy() {
           function (err, res) {
             if (err) throw err;
             console.log(res);
-          }
+            hasBought = true;
+            print();
 
+          }
+          
         )
+
+       
       }
     })
 }
