@@ -41,12 +41,12 @@ function start() {
     }
 
     console.log(table.toString());
-    if (!hasBought){
+    if (!hasBought) {
       buy();
     }
 
   })
-  
+
 };
 
 
@@ -58,18 +58,35 @@ function buy() {
       type: "input",
       message: "Please enter the product Id that you wish to purchase",
     }).then(function (answer) {
-      console.log(parseInt(answer.whichProduct))
-      connection.query(
 
-        "SELECT * From PRODUCTS WHERE ?",
-          {
-            product_name : answer.whichProduct},
-        function (err, res) {
-          if (err) throw err;
-          console.log(res);
-        }
+      connection.query("select * from products where ?", [{
+        id: answer.whichProduct
+      }], function (err, res) {
+       console.log(res)
+        decrementAndPrint(res, answer);
+       
+      })
 
-      )
+
+
+      function decrementAndPrint(res, answer) {
+        var decrement = res[0].stock_quantity - 1;
+        hasbought = true;
+        connection.query(
+          "UPDATE products SET ? WHERE ?",
+          [{
+              stock_quantity: decrement
+            },
+            {
+              id: answer.whichProduct
+            }
+          ],
+          function (err, res) {
+            if (err) throw err;
+            console.log(res);
+          }
+
+        )
+      }
     })
-    hasbought = true;
 }
