@@ -5,6 +5,8 @@ If you wish to run this application on our computer there are a few things that 
     you must have mySQL workbench installed
     you must install these npms in the command line: cli-table, inquirer, mysql
     You will need to put your own root name and password into the correct spot in the code so that your computer knows how to communicate       with your mySQL database. 
+    you will have to look for this piece of code
+    
 
 1. To run this app first you will need to clone this repository onto your desktop: the process for this is found here:
     https://help.github.com/en/articles/cloning-a-repository
